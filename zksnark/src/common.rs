@@ -17,7 +17,7 @@ pub type FEp = FieldElement::<Fp>;
 pub type F = U64GoldilocksPrimeField;
 pub type FE = FieldElement::<F>;
 
-pub fn sample_fr_elem_zp() -> FieldElement<Fp>  {
+pub fn sample_fr_elem_zp() -> FEp  {
     let mut rng = rand::thread_rng();
     // let random_u64: u64 = rng.gen();
     let random_u64: u64 = rng.gen_range(1..=1000000);
@@ -25,7 +25,7 @@ pub fn sample_fr_elem_zp() -> FieldElement<Fp>  {
     FEp::from(random_u64)
 }
 
-pub fn sample_fr_elem_zq() -> FieldElement<F>  {
+pub fn sample_fr_elem_zq() -> FE {
     let mut rng = rand::thread_rng();
     // let random_u64: u64 = rng.gen();
     let random_u64: u64 = rng.gen_range(1..=1000000);

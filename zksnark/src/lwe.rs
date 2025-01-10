@@ -1,6 +1,4 @@
-use crate::{common::*, sap::SquareArithmeticProgram as SAP};
-use lambdaworks_math::polynomial::Polynomial;
-
+use crate::common::*;
 use rand::Rng;
 
 
@@ -35,25 +33,25 @@ impl LWE {
     pub fn encode(&self, m: FEp, s: &Vec<FE>) -> (Vec<FE>, FE)  {
         let a: Vec<FE> = (0..self.pk.n).map(|_| sample_fr_elem_zq()).collect();
 
-        println!("\na vector:\n");
+        // println!("\na vector:\n");
         for i in &a {
             let hex_ = i.clone().representative().to_hex();
             let z = u64::from_str_radix(&hex_, 16).unwrap();
-            println!("{}", z);
+            // println!("{}", z);
             // println!("s = {}", i);
         }
 
         let e = discrete_gaussian(self.std_);
-        println!("\nGenerate error vector from normal distribution: e = {}", u64::from_str_radix(&e.clone().representative().to_hex(), 16).unwrap());
+        // println!("\nGenerate error vector from normal distribution: e = {}", u64::from_str_radix(&e.clone().representative().to_hex(), 16).unwrap());
 
         let temp =  inner_product(&a, &s);
-        println!("\na*s = {}", u64::from_str_radix(&temp.clone().representative().to_hex(), 16).unwrap());
+        // println!("\na*s = {}", u64::from_str_radix(&temp.clone().representative().to_hex(), 16).unwrap());
 
         let temp1 =  temp + FE::from(self.pk.p) * e;
-        println!("\na*s + p*e = {}", u64::from_str_radix(&temp1.clone().representative().to_hex(), 16).unwrap());
+        // println!("\na*s + p*e = {}", u64::from_str_radix(&temp1.clone().representative().to_hex(), 16).unwrap());
 
         let temp2 =  temp1 + FE::from_hex_unchecked(&m.representative().to_hex());
-        println!("\na*s + p*e + m = {}", u64::from_str_radix(&temp2.clone().representative().to_hex(), 16).unwrap());
+        // println!("\na*s + p*e + m = {}", u64::from_str_radix(&temp2.clone().representative().to_hex(), 16).unwrap());
 
         let mut neg_c0: Vec<FE> = a.clone();
         for i in 0..a.len() {
@@ -72,7 +70,7 @@ impl LWE {
         let c0_u64 = u64::from_str_radix(&c1.clone().representative().to_hex(), 16).unwrap();
         let temp_u64 = u64::from_str_radix(&temp.clone().representative().to_hex(), 16).unwrap();
         let m =   c0_u64 - temp_u64;
-        println!("\nc1 - a * s  = {}", m);
+        // println!("\nc1 - a * s  = {}", m);
 
         FEp::from(m)
     }

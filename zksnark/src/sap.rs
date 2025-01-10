@@ -1,6 +1,6 @@
 use crate::{
-    common::{FEp, FE},
-    r1cs::{self, Constraint, R1CS},
+    common::FEp,
+    r1cs::R1CS,
 };
 use std::convert::From;
 use lambdaworks_math::polynomial::Polynomial;
@@ -14,9 +14,9 @@ pub struct SquareArithmeticProgram {
     pub num_r1cs_witness_variables: usize, 
     /// Number of constraints in the underlying R1CS.
     pub num_r1cs_constraints: usize,
-    pub u_polynomials: Vec<Polynomial<FE>>,
-    pub w_polynomials: Vec<Polynomial<FE>>,
-    pub target: Polynomial<FE>,
+    pub u_polynomials: Vec<Polynomial<FEp>>,
+    pub w_polynomials: Vec<Polynomial<FEp>>,
+    pub target: Polynomial<FEp>,
     pub r1cs: R1CS,
 }
 
@@ -31,9 +31,9 @@ impl SquareArithmeticProgram {
         num_instance_variables: usize,
         num_r1cs_witness_variables: usize,
         num_r1cs_constraints: usize,
-        u_polynomials: Vec<Polynomial<FE>>,
-        w_polynomials: Vec<Polynomial<FE>>,
-        target: Polynomial<FE>,
+        u_polynomials: Vec<Polynomial<FEp>>,
+        w_polynomials: Vec<Polynomial<FEp>>,
+        target: Polynomial<FEp>,
         r1cs: R1CS,
     ) -> Result<Self, CreationError> {
         // if u_polynomials.len() != w_polynomials.len()
@@ -62,46 +62,50 @@ impl SquareArithmeticProgram {
         })
     }
 
-    pub fn h_polinomial(&self, c: &[FE]) -> Polynomial<FE> {
+    pub fn h_polinomial(&self, c: &[FEp]) -> Polynomial<FEp> {
         self.p_polinomial(c).div_with_ref(&self.target)
     }
 
-    pub fn p_polinomial(&self, cs: &[FE]) -> Polynomial<FE> {
-        let u_x: Polynomial<FE> = self.u_polynomials[0].clone()
+    pub fn p_polinomial(&self, cs: &[FEp]) -> Polynomial<FEp> {
+        let u_x: Polynomial<FEp> = self.u_polynomials[0].clone()
             + self.u_polynomials[1..]
                 .iter()
-                .zip(cs.clone())
+                .zip(cs)
                 .map(|(v, c)| v.mul_with_ref(&Polynomial::new_monomial(c.clone(), 0)))
                 .reduce(|x, y| x + y)
                 .unwrap();
 
-        let w_x: Polynomial<FE> = self.w_polynomials[0].clone()
+        let w_x: Polynomial<FEp> = self.w_polynomials[0].clone()
             + self.w_polynomials[1..]
                 .iter()
-                .zip(cs.clone())
+                .zip(cs)
                 .map(|(v, c)| v.mul_with_ref(&Polynomial::new_monomial(c.clone(), 0)))
                 .reduce(|x, y| x + y)
                 .unwrap();
 
-    // let p_polinomial = &double_u_x - &w_x2;
+        // let p_polinomial = u_x.clone() * u_x.clone() - w_x.clone();
 
-    // let h = p_polinomial.div_with_ref(&t);
+        // let h = p_polinomial.clone().div_with_ref(&self.target);
 
-    // // check condition
-    // let right = w_x2 + h.mul_with_ref(&t);
-    
-    // println!("\nright\n");
-    // for j in 0..right.coeff_len() {
-    //     print!("{} ", right.coefficients[j]);
-    // }
+        // // check condition
+        // let right = w_x.clone() + h.mul_with_ref(&self.target);
+        
+        // println!("\nright\n");
+        // for j in 0..right.coeff_len() {
+        //     print!("{} ", right.coefficients[j]);
+        // }
 
-    // println!("\nleft\n");
-    // for j in 0..double_u_x.coeff_len() {
-    //     print!("{} ", double_u_x.coefficients[j]);
-    // }
+        // println!("\nleft\n");
+        // for j in 0..p_polinomial.coeff_len() {
+        //     print!("{} ", p_polinomial.coefficients[j]);
+        // }
 
         u_x.clone() * u_x - w_x
     }
+
+    // pub fn ful_instnce_size() -> usize {
+
+    // }
 
     pub fn r1cs_to_sap(r1cs: R1CS) -> Self {
         let num_r1cs_constraints = r1cs.num_of_constraints();
@@ -113,8 +117,8 @@ impl SquareArithmeticProgram {
         let extra_constr_offset = 2 * num_r1cs_constraints;
         let extra_var_offset2 = (num_instance_variables - 1) + num_r1cs_aux_variables + num_r1cs_constraints;
 
-        let mut a = vec![vec![FE::zero(); sap_num_var + 1]; extra_constr_offset + 2 * num_instance_variables];
-        let mut c = vec![vec![FE::zero(); sap_num_var + 1]; extra_constr_offset + 2 * num_instance_variables];
+        let mut a = vec![vec![FEp::zero(); sap_num_var + 1]; extra_constr_offset + 2 * num_instance_variables];
+        let mut c = vec![vec![FEp::zero(); sap_num_var + 1]; extra_constr_offset + 2 * num_instance_variables];
 
         let (a_matrix, b_matrix, c_matrix) = r1cs.constraints_to_matrix();
 
@@ -125,38 +129,38 @@ impl SquareArithmeticProgram {
         
         for i in 0..num_r1cs_constraints {
             for j in 0..r1cs.constraints[i].a.len() {
-                a[j][2 * i] += a_matrix[i][j];
-                a[j][2 * i + 1] += a_matrix[i][j];
+                a[j][2 * i] += a_matrix[i][j].clone();
+                a[j][2 * i + 1] += a_matrix[i][j].clone();
             }
 
             for j in 0..r1cs.constraints[i].b.len() {
-                a[j][2 * i] += b_matrix[i][j];
-                a[j][2 * i + 1] = a[j][2 * i + 1] - b_matrix[i][j];
+                a[j][2 * i] += b_matrix[i][j].clone();
+                a[j][2 * i + 1] = a[j][2 * i + 1].clone() - b_matrix[i][j].clone();
             }
     
             for j in 0..r1cs.constraints[i].c.len() {
-                c[j][2 * i] += times_four(c_matrix[i][j]);
+                c[j][2 * i] += times_four(&c_matrix[i][j]);
             }
     
-            c[extra_var_offset + i][2 * i] += FE::from(1);
-            c[extra_var_offset + i][2 * i + 1] += FE::from(1);
+            c[extra_var_offset + i][2 * i] += FEp::from(1);
+            c[extra_var_offset + i][2 * i + 1] += FEp::from(1);
         }
 
         // (s_i + s_0)^2 = 4 s_i + s''_i
         // (s_i - s_0)^2 = s''_i
     
-        a[0][extra_constr_offset] = FE::from(1);
-        c[0][extra_constr_offset] = FE::from(1);
+        a[0][extra_constr_offset] = FEp::from(1);
+        c[0][extra_constr_offset] = FEp::from(1);
 
         for i in 1..num_instance_variables {
-            a[i][extra_constr_offset + 2 * i - 1] += FE::from(1);
-            a[0][extra_constr_offset + 2 * i - 1] += FE::from(1);
-            c[i][extra_constr_offset + 2 * i - 1] += times_four(FE::from(1));
-            c[extra_var_offset2 + i][extra_constr_offset + 2 * i - 1] += FE::from(1);
+            a[i][extra_constr_offset + 2 * i - 1] += FEp::from(1);
+            a[0][extra_constr_offset + 2 * i - 1] += FEp::from(1);
+            c[i][extra_constr_offset + 2 * i - 1] += times_four(&FEp::from(1));
+            c[extra_var_offset2 + i][extra_constr_offset + 2 * i - 1] += FEp::from(1);
 
-            a[i][extra_constr_offset + 2 * i] += FE::from(1);
-            a[0][extra_constr_offset + 2 * i] = a[0][extra_constr_offset + 2 * i] - FE::from(1);
-            c[extra_var_offset2 + i][2 * num_r1cs_constraints + 2 * i] += FE::from(1);
+            a[i][extra_constr_offset + 2 * i] += FEp::from(1);
+            a[0][extra_constr_offset + 2 * i] = a[0][extra_constr_offset + 2 * i].clone() - FEp::from(1);
+            c[extra_var_offset2 + i][2 * num_r1cs_constraints + 2 * i] += FEp::from(1);
         }
 
         // println!("A");
@@ -177,8 +181,8 @@ impl SquareArithmeticProgram {
 
         let rq_size = 2 * num_r1cs_constraints + 2 * (num_instance_variables - 1) + 1;
 
-        let rs: Vec<FE> = (0..rq_size as u64)
-            .map(|i| FE::new(i.into()))
+        let rs: Vec<FEp> = (0..rq_size as u64)
+            .map(|i| FEp::new(i.into()))
             .collect();
 
         // println!("roots:");
@@ -187,13 +191,13 @@ impl SquareArithmeticProgram {
         // }
 
 
-        let mut us: Vec<Polynomial<FE>> = Vec::with_capacity(sap_num_var + 1);
-        let mut ws: Vec<Polynomial<FE>> = Vec::with_capacity(sap_num_var + 1);
-        let mut t: Polynomial<FE> = Polynomial::new_monomial(FE::from(1), 0);
+        let mut us: Vec<Polynomial<FEp>> = Vec::with_capacity(sap_num_var + 1);
+        let mut ws: Vec<Polynomial<FEp>> = Vec::with_capacity(sap_num_var + 1);
+        let mut t: Polynomial<FEp> = Polynomial::new_monomial(FEp::from(1), 0);
 
         println!("t(x) = ");
         for r in &rs {
-            t = t * Polynomial::new(&[-r, FE::from(1)]);
+            t = t * Polynomial::new(&[-r, FEp::from(1)]);
         }
 
         for i in 0..t.coeff_len() {
@@ -201,8 +205,8 @@ impl SquareArithmeticProgram {
         }
 
         for i in 0..=sap_num_var {
-            let u_ys: Vec<FE> = a[i].clone();
-            let w_ys: Vec<FE> = c[i].clone();
+            let u_ys: Vec<FEp> = a[i].clone();
+            let w_ys: Vec<FEp> = c[i].clone();
 
             // println!("u_ys:");
             // for i in &u_ys {
@@ -246,16 +250,17 @@ impl SquareArithmeticProgram {
 
 }
 
-fn times_four(x : FE) -> FE {
+fn times_four(x : &FEp) -> FEp {
     let times_two = x + x;
-    times_two + times_two
+    times_two.clone()  + times_two
 }
 
-fn eval(terms: &[FE], assignment: &[FE]) -> FE {
-    let mut acc = FE::from(0);
+#[allow(dead_code)]
+fn eval(terms: &[FEp], assignment: &[FEp]) -> FEp {
+    let mut acc = FEp::from(0);
     for i in 0..terms.len() {
-        let value = assignment[i];
-        acc += value * terms[i];
+        let value = assignment[i].clone();
+        acc += value * terms[i].clone();
     }
 
     acc
@@ -278,14 +283,14 @@ pub mod tests {
 
     #[test]
     fn r1cs_to_sap_test_with_evaluation() {
-        let constraints = vec![new_test_first_constraint(), new_test_second_constraint()];
+        let _constraints = vec![new_test_first_constraint(), new_test_second_constraint()];
         let r1cs = new_test_r1cs();
 
         let sap = SquareArithmeticProgram::r1cs_to_sap(r1cs.clone());
 
         // instance_plus_withess
-        let mut full_input: Vec<FE> = vec![FE::from(1), FE::from(3), FE::from(5), FE::from(4),
-                                           FE::from(2), FE::from(8), FE::from(64)];
+        let mut full_input: Vec<FEp> = vec![FEp::from(1), FEp::from(3), FEp::from(5), FEp::from(4),
+                                           FEp::from(2), FEp::from(8), FEp::from(64)];
 
         let (a, b, _c) = &r1cs.constraints_to_matrix();
 
@@ -295,18 +300,18 @@ pub mod tests {
                                                     .map(|(a_i, b_i)| {
                                                         let mut extra_var = eval(a_i, &full_input);
                                                         extra_var = extra_var - eval(b_i, &full_input);
-                                                        extra_var * extra_var
+                                                        extra_var.clone() * extra_var
                                                     })
                                                     .collect::<Vec<_>>();
     
         full_input.extend(temp); 
 
         // extra_var = (x_i - 1)^2
-        let one = FE::from(1);
+        let one = FEp::from(1);
         for i in 1..sap.num_instance_variables {
-            let mut extra_var = full_input[i];
+            let mut extra_var = full_input[i].clone();
             extra_var = extra_var - &one;
-            extra_var *= extra_var;
+            extra_var *= extra_var.clone();
             full_input.push(extra_var);
         }
 
@@ -316,9 +321,10 @@ pub mod tests {
             println!("{}", i);
         }  
         
+        sap.p_polinomial(&full_input);
         // assert_eq!(double_u_x, right);
 
-        // let zero = FE::from(0);
+        // let zero = FEp::from(0);
         // let rq_size = 2 * sap.num_r1cs_constraints + 2 * (sap.num_instance_variables - 1) + 1;
 
         // let mut a = vec![zero; rq_size];
@@ -336,15 +342,16 @@ pub mod tests {
         // }
     }
 
-    fn test_solution() -> Vec<FE> {
+    #[allow(dead_code)]
+    fn test_solution() -> Vec<FEp> {
         vec![
-            FE::from(0),
-            FE::from(1),
-            FE::from(2),
-            FE::from(3),
-            FE::from(4),
-            FE::from(12),
-            FE::from(36),
+            FEp::from(0),
+            FEp::from(1),
+            FEp::from(2),
+            FEp::from(3),
+            FEp::from(4),
+            FEp::from(12),
+            FEp::from(36),
         ]
     }
 }

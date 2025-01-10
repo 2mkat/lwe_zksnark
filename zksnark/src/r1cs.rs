@@ -1,4 +1,4 @@
-use crate::common::FE;
+use crate::common::FEp;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum CreationError {
@@ -22,9 +22,9 @@ pub enum CreationError {
 /// R1CS представление арифметической программы
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Constraint {
-    pub a: Vec<FE>,
-    pub b: Vec<FE>,
-    pub c: Vec<FE>,
+    pub a: Vec<FEp>,
+    pub b: Vec<FEp>,
+    pub c: Vec<FEp>,
 }
 
 use std::fmt;
@@ -84,7 +84,7 @@ impl R1CS {
         }
     }
 
-    pub fn constraints_to_matrix(&self) -> (Vec<Vec<FE>>, Vec<Vec<FE>>, Vec<Vec<FE>>) {
+    pub fn constraints_to_matrix(&self) -> (Vec<Vec<FEp>>, Vec<Vec<FEp>>, Vec<Vec<FEp>>) {
         let constr = &self.constraints;
         // num_constraints
         let m = constr.len();
@@ -93,9 +93,9 @@ impl R1CS {
 
 
          // Create matrix A, B, C with size m x n
-        let mut a_matrix = vec![vec![FE::zero(); n]; m];
-        let mut b_matrix = vec![vec![FE::zero(); n]; m];
-        let mut c_matrix = vec![vec![FE::zero(); n]; m];
+        let mut a_matrix = vec![vec![FEp::zero(); n]; m];
+        let mut b_matrix = vec![vec![FEp::zero(); n]; m];
+        let mut c_matrix = vec![vec![FEp::zero(); n]; m];
 
         // fulfill the matrix
         for (i, constraint) in constr.iter().enumerate() {
@@ -136,9 +136,9 @@ impl R1CS {
     }
 
     pub fn new_with_matrixes(
-        a: Vec<Vec<FE>>,
-        b: Vec<Vec<FE>>,
-        c: Vec<Vec<FE>>,
+        a: Vec<Vec<FEp>>,
+        b: Vec<Vec<FEp>>,
+        c: Vec<Vec<FEp>>,
         num_inputs: usize,
         num_outputs: usize,
     ) -> Result<Self, CreationError> {
@@ -155,7 +155,7 @@ impl R1CS {
     }
 
     #[allow(dead_code)]
-    pub fn verify_solution(self, s: &[FE]) -> bool {
+    pub fn verify_solution(self, s: &[FEp]) -> bool {
         for constraint in self.constraints {
             if !constraint.verify_solution(s) {
                 return false;
@@ -192,7 +192,7 @@ impl Constraint {
     /// Создаем новое ограничение для a,b,c векторов
     /// размеры всех векторов должны совпадать
     #[allow(dead_code)]
-    pub fn new(a: Vec<FE>, b: Vec<FE>, c: Vec<FE>) -> Result<Self, CreationError> {
+    pub fn new(a: Vec<FEp>, b: Vec<FEp>, c: Vec<FEp>) -> Result<Self, CreationError> {
         if a.len() != b.len() || a.len() != c.len() || b.len() != c.len() {
             Err(CreationError::VectorsSizeMismatch)
         } else {
@@ -201,17 +201,17 @@ impl Constraint {
     }
 
     #[allow(dead_code)]
-    pub fn verify_solution(self, s: &[FE]) -> bool {
+    pub fn verify_solution(self, s: &[FEp]) -> bool {
         inner_product(&self.a, s) * inner_product(&self.b, s) == inner_product(&self.c, s)
     }
 }
 
 // вычисляем скалярное произведение двух векторов
-pub fn inner_product(v1: &[FE], v2: &[FE]) -> FE {
+pub fn inner_product(v1: &[FEp], v2: &[FEp]) -> FEp {
     v1.iter()
         .zip(v2)
         .map(|(x, y)| x * y)
-        .fold(FE::from(0), |x, y| x + y)
+        .fold(FEp::from(0), |x, y| x + y)
 }
 
 #[cfg(test)]
@@ -222,18 +222,18 @@ pub mod tests {
 
     #[test]
     fn mul_vectors_2_2_3_3_equals_12() {
-        let v1 = &[FE::from(2), FE::from(2)];
-        let v2 = &[FE::from(3), FE::from(3)];
+        let v1 = &[FEp::from(2), FEp::from(2)];
+        let v2 = &[FEp::from(3), FEp::from(3)];
 
-        assert_eq!(inner_product(v1, v2), FE::from(12));
+        assert_eq!(inner_product(v1, v2), FEp::from(12));
     }
 
     #[test]
     fn mul_vectors_3_5_equals_15() {
-        let v1 = &[FE::from(3)];
-        let v2 = &[FE::from(5)];
+        let v1 = &[FEp::from(3)];
+        let v2 = &[FEp::from(5)];
 
-        assert_eq!(inner_product(v1, v2), FE::from(15));
+        assert_eq!(inner_product(v1, v2), FEp::from(15));
     }
 
     #[test]
@@ -249,13 +249,13 @@ pub mod tests {
     #[test]
     fn verify_bad_solution_with_test_circuit_c5_constraints() {
         let solution = vec![
-            FE::from(0),
-            FE::from(0),
-            FE::from(0),
-            FE::from(4),
-            FE::from(1),
-            FE::from(0),
-            FE::from(0),
+            FEp::from(0),
+            FEp::from(0),
+            FEp::from(0),
+            FEp::from(4),
+            FEp::from(1),
+            FEp::from(0),
+            FEp::from(0),
         ];
         assert!(!new_test_first_constraint().verify_solution(&solution));
     }
@@ -263,13 +263,13 @@ pub mod tests {
     #[test]
     fn verify_bad_solution_with_test_circuit_c6_constraints() {
         let solution = vec![
-            FE::from(0),
-            FE::from(2),
-            FE::from(1),
-            FE::from(4),
-            FE::from(5),
-            FE::from(2),
-            FE::from(2),
+            FEp::from(0),
+            FEp::from(2),
+            FEp::from(1),
+            FEp::from(4),
+            FEp::from(5),
+            FEp::from(2),
+            FEp::from(2),
         ];
         assert!(!new_test_second_constraint().verify_solution(&solution));
     }
@@ -282,13 +282,13 @@ pub mod tests {
     #[test]
     fn verify_bad_solution_with_new_test_r1cs() {
         let solution = vec![
-            FE::from(0),
-            FE::from(2),
-            FE::from(1),
-            FE::from(4),
-            FE::from(5),
-            FE::from(2),
-            FE::from(2),
+            FEp::from(0),
+            FEp::from(2),
+            FEp::from(1),
+            FEp::from(4),
+            FEp::from(5),
+            FEp::from(2),
+            FEp::from(2),
         ];
 
         assert!(!new_test_r1cs().verify_solution(&solution))
@@ -297,13 +297,13 @@ pub mod tests {
     #[test]
     fn verify_bad_solution_because_of_second_constraint_with_new_test_r1cs() {
         let solution = vec![
-            FE::from(0),  // c0
-            FE::from(2),  // c1
-            FE::from(1),  // c2
-            FE::from(5),  // c3
-            FE::from(10), // c4
-            FE::from(50), // c5 = c4 * c3
-            FE::from(2),  // c6 != c5 * (c1+c2)
+            FEp::from(0),  // c0
+            FEp::from(2),  // c1
+            FEp::from(1),  // c2
+            FEp::from(5),  // c3
+            FEp::from(10), // c4
+            FEp::from(50), // c5 = c4 * c3
+            FEp::from(2),  // c6 != c5 * (c1+c2)
         ];
         assert!(!new_test_r1cs().verify_solution(&solution))
     }
@@ -311,26 +311,26 @@ pub mod tests {
     #[test]
     fn verify_bad_solution_because_of_first_constraint_with_new_test_r1cs() {
         let solution = vec![
-            FE::from(0),  // c0
-            FE::from(1),  // c1
-            FE::from(1),  // c2
-            FE::from(5),  // c3
-            FE::from(10), // c4
-            FE::from(10), // c5 != c4 * c3
-            FE::from(19), // c6 = c5 * (c1+c2), so this should fail
+            FEp::from(0),  // c0
+            FEp::from(1),  // c1
+            FEp::from(1),  // c2
+            FEp::from(5),  // c3
+            FEp::from(10), // c4
+            FEp::from(10), // c5 != c4 * c3
+            FEp::from(19), // c6 = c5 * (c1+c2), so this should fail
         ];
         assert!(!new_test_r1cs().verify_solution(&solution))
     }
 
-    fn test_solution() -> Vec<FE> {
+    fn test_solution() -> Vec<FEp> {
         vec![
-            FE::from(0),
-            FE::from(1),
-            FE::from(2),
-            FE::from(3),
-            FE::from(4),
-            FE::from(12),
-            FE::from(36),
+            FEp::from(0),
+            FEp::from(1),
+            FEp::from(2),
+            FEp::from(3),
+            FEp::from(4),
+            FEp::from(12),
+            FEp::from(36),
         ]
     }
 }
