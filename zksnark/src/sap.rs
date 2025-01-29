@@ -26,7 +26,6 @@ pub enum CreationError {
 }
 
 impl SquareArithmeticProgram {
-    /// Creates a new SAP
     pub fn new(
         num_instance_variables: usize,
         num_r1cs_witness_variables: usize,

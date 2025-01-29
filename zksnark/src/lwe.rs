@@ -36,7 +36,7 @@ impl LWE {
         // println!("\na vector:\n");
         for i in &a {
             let hex_ = i.clone().representative().to_hex();
-            let z = u64::from_str_radix(&hex_, 16).unwrap();
+            let _z = u64::from_str_radix(&hex_, 16).unwrap();
             // println!("{}", z);
             // println!("s = {}", i);
         }

@@ -50,7 +50,7 @@ pub fn prove(crs: CommonReferenceString, u: Vec<FEp>, w: Vec<FEp>) -> (FE, FE) {
 
     // calculate g(r)
     let r = FE::from_hex_unchecked(&sample_fr_elem_zp().representative().to_hex());
-    let mut u_x_coeff = u_x.coefficients();
+    let u_x_coeff = u_x.coefficients();
     let mut part_twp_in_g_w: FE = FE::from(0);
 
     for i in 0..u_x_coeff.len() {
@@ -67,7 +67,7 @@ pub fn prove(crs: CommonReferenceString, u: Vec<FEp>, w: Vec<FEp>) -> (FE, FE) {
         delta_v_s += crs.delta_si[i] * FE::from_hex_unchecked(&u_x_coeff[i].representative().to_hex());
     }
 
-    let mut t_x_coeff = crs.sap.target.coefficients();
+    let t_x_coeff = crs.sap.target.coefficients();
     let mut delta_t_s: FE = FE::from(0);
     for i in 0..t_x_coeff.len() {
         delta_t_s += crs.delta_si[i] * FE::from_hex_unchecked(&t_x_coeff[i].representative().to_hex());
@@ -76,15 +76,13 @@ pub fn prove(crs: CommonReferenceString, u: Vec<FEp>, w: Vec<FEp>) -> (FE, FE) {
     let a_proof = delta_t_s + delta_v_s;
 
     // calculate B proof
-    let mut h_x_coeff = h_polinomial_from_sap.coefficients();
+    let h_x_coeff = h_polinomial_from_sap.coefficients();
     let mut delta_t_s_h_s: FE = FE::from(0);
     for i in 0..h_x_coeff.len() {
         delta_t_s_h_s += crs.delta_si[i] * FE::from_hex_unchecked(&h_x_coeff[i].representative().to_hex());
     }
 
     let b_proof = f_w + g_r + delta_t_s_h_s;
-
-
 
     (a_proof, b_proof)
 }

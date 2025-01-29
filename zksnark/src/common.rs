@@ -8,11 +8,13 @@ use lambdaworks_math::field::{
 use rand::Rng;
 
 //Babybear Prime p = 2^31 - 2^27 + 1 = 0x78000001 = 2013265921
+// for encode message space
 
 pub type Fp = Babybear31PrimeField;
 pub type FEp = FieldElement::<Fp>;
 
 //Babybear Prime p = 2^64 - 2^32 + 1 = 18446744069414584321
+// for message space
 
 pub type F = U64GoldilocksPrimeField;
 pub type FE = FieldElement::<F>;

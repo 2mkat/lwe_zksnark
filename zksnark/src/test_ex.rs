@@ -1,6 +1,5 @@
 use crate::{common::*, 
     r1cs::{Constraint, R1CS}, 
-    sap::SquareArithmeticProgram as SAP, 
     lwe::*};
 use lambdaworks_math::polynomial::Polynomial;
 use std::convert::From;

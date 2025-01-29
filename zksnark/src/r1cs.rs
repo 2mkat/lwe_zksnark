@@ -19,7 +19,6 @@ pub enum CreationError {
  * A R1CS constraint is used to construct a R1CS constraint system (see below).
  */
 
-/// R1CS представление арифметической программы
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Constraint {
     pub a: Vec<FEp>,
@@ -38,12 +37,6 @@ impl std::fmt::Display for Constraint {
     }
 }
 
-/// R1CS представлен как веткор ограничений (векторов)
-/// Каждое ограничение состоит из трех векторов
-/// Все ограничения вместе формируют три матрицы A, B, C,
-/// которые используются для описания R1CS
-/// Первые вектора a из каждого ограничения соединяются в матрицу
-/// Вторые вектора b тоже соединяются в матрицу
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct R1CS {
     pub constraints: Vec<Constraint>,
@@ -62,14 +55,9 @@ impl R1CS {
         let witness_size = constraints[0].a.len();
         // println!("Constraint [0] = {}", constraints[0]);
         // println!("Witness Size = {}", witness_size.clone());
-        // Каждое ограничение уже имеет правильную размерность
-        // то есть все вектора имеют один размер
-        // проверяем, что все вектора имеют одинаковый размер
         let all_same_length = constraints
             .iter()
             .all(|v| v.a.len() == constraints[0].a.len());
-
-        // Нужно ли добавить провекрки на другие вектора?
 
         if !all_same_length {
             Err(CreationError::VectorsSizeMismatch)

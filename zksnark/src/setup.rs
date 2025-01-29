@@ -44,7 +44,7 @@ pub fn setup(sap: &SAP) -> (Vec<FE>, CommonReferenceString, Vec<FEp>) {
         delta_si_t_sk.push(lwe.encode(delta.clone() * pow(&s, i) * t_s.clone(), &sk).1);
     }
 
-    let mut delta_wi_beta_vi: Vec<FE> = Vec::with_capacity(sap.num_r1cs_witness_variables + 1);
+    let delta_wi_beta_vi: Vec<FE> = Vec::with_capacity(sap.num_r1cs_witness_variables + 1);
     for i in (sap.num_instance_variables - 1)..sap.target.degree(){
         let temp: FEp = delta.clone() * sap.w_polynomials[i].evaluate(&s) + beta.clone() * sap.u_polynomials[i].evaluate(&s);
         delta_si_t_sk.push(lwe.encode(temp, &sk).1);
